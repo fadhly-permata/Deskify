@@ -107,34 +107,16 @@ fun WindowsTaskbar(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Empty spacer for balance or Left Widgets icon
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable { }
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Widgets,
-                        contentDescription = "Widgets",
-                        tint = iconColor.copy(alpha = 0.8f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-
-            // Center Taskbar App Row (Start, Search, Task View, App Icons)
+            // Left Taskbar Area (Start Menu + Pinned/Running App Icons)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.weight(1f, fill = false)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Windows 11 Start Button
+                // Windows Start Button (Far Left)
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -144,7 +126,7 @@ fun WindowsTaskbar(
                         .testTag("taskbar_start_button"),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Windows 11 4-Square Logo
+                    // Windows 4-Square Logo
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                             Box(modifier = Modifier.size(7.dp).background(Color(0xFF00ADEF), RoundedCornerShape(1.dp)))
@@ -155,38 +137,6 @@ fun WindowsTaskbar(
                             Box(modifier = Modifier.size(7.dp).background(Color(0xFF00ADEF), RoundedCornerShape(1.dp)))
                         }
                     }
-                }
-
-                // Search Icon
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable { onToggleStartMenu() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = iconColor,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                // Task View Icon
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable { },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.GridView,
-                        contentDescription = "Task View",
-                        tint = iconColor,
-                        modifier = Modifier.size(19.dp)
-                    )
                 }
 
                 // Pinned & Running Taskbar Icons

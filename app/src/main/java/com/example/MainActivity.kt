@@ -200,8 +200,8 @@ fun LauncherMainScreen(
         if (isStartMenuOpen) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 56.dp)
+                    .align(Alignment.BottomStart)
+                    .padding(bottom = 56.dp, start = 8.dp)
             ) {
                 WindowsStartMenu(
                     isDarkMode = settings.isDarkMode,

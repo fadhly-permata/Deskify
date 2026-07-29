@@ -69,15 +69,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     }
 
     private fun initDefaultDockAndDesktop() {
-        val defaultDock = listOf(
-            DockItemModel("dock_finder", "File Explorer", appType = WindowAppType.FINDER),
-            DockItemModel("dock_safari", "Microsoft Edge", appType = WindowAppType.SAFARI),
-            DockItemModel("dock_notes", "Notepad", appType = WindowAppType.NOTES),
-            DockItemModel("dock_terminal", "Terminal", appType = WindowAppType.TERMINAL),
-            DockItemModel("dock_settings", "Settings", appType = WindowAppType.SETTINGS)
-        )
-        _dockItems.value = defaultDock
-
+        _dockItems.value = emptyList()
         _desktopIcons.value = emptyList()
     }
 
@@ -85,8 +77,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             db.noteDao().insertNote(
                 NoteEntity(
-                    title = "Welcome to Windows 11 Launcher!",
-                    content = "This is a full Windows 11 desktop experience for Android.\n\nKey Features:\n- Windows 11 Taskbar, Start Menu, Quick Settings & Calendar\n- Freeform multi-windowing with Windows titlebar controls (— 🗖 ✕)\n- Clean, full-canvas window content without clutter\n- Built-in File Explorer, Edge, Notepad, Calculator, Terminal, Settings\n- Native Android app support!",
+                    title = "Welcome to Windows Launcher!",
+                    content = "Key Features:\n- Taskbar on Left with Start Menu, Quick Settings & Calendar\n- Freeform multi-windowing for native Android apps\n- Clean desktop experience!",
                     isPinned = true
                 )
             )

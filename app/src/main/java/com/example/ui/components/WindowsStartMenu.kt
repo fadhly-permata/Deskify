@@ -85,16 +85,6 @@ fun WindowsStartMenu(
     val cardBg = if (isDarkMode) Color(0xFF2B2B2B) else Color.White
     val borderColor = if (isDarkMode) Color(0x33FFFFFF) else Color(0x1A000000)
 
-    val builtInApps = remember {
-        listOf(
-            Triple(WindowAppType.FINDER, "File Explorer", Icons.Default.Folder),
-            Triple(WindowAppType.SAFARI, "Microsoft Edge", Icons.Default.Language),
-            Triple(WindowAppType.NOTES, "Notepad", Icons.Default.EditNote),
-            Triple(WindowAppType.TERMINAL, "Terminal", Icons.Default.Code),
-            Triple(WindowAppType.SETTINGS, "Settings", Icons.Default.Settings)
-        )
-    }
-
     val filteredInstalledApps = remember(searchQuery, installedApps) {
         if (searchQuery.isBlank()) installedApps else installedApps.filter { it.label.contains(searchQuery, ignoreCase = true) }
     }
@@ -253,53 +243,15 @@ fun WindowsStartMenu(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Pinned Grid (Built-in + Installed)
+                        // Pinned Grid (Installed Apps)
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(6),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            // Built in apps
-                            items(builtInApps) { (appType, name, iconVec) ->
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .clickable {
-                                            onBuiltInAppClick(appType)
-                                            onDismiss()
-                                        }
-                                        .padding(vertical = 6.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(cardBg),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = iconVec,
-                                            contentDescription = name,
-                                            tint = Win11Blue,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = name,
-                                        color = textColor,
-                                        fontSize = 11.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
-
                             // Installed apps preview
-                            items(installedApps.take(12)) { app ->
+                            items(installedApps.take(18)) { app ->
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     modifier = Modifier
