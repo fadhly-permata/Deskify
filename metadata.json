@@ -1,0 +1,6 @@
+{
+  "name": "macOS Launcher",
+  "description": "macOS Style Android Launcher with Freeform Windowing, Dock, Launchpad, Control Center, and Desktop apps",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
