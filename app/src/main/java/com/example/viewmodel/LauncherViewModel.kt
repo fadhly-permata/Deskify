@@ -145,12 +145,77 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         val nextZ = getNextMaxZIndex()
         _openWindows.value = _openWindows.value.map { win ->
             if (win.id == windowId) {
-                win.copy(isFocused = true, zIndex = nextZ)
+                win.copy(isFocused = true, isMinimized = false, zIndex = nextZ)
             } else {
                 win.copy(isFocused = false)
             }
         }
         _activeFocusedWindowId.value = windowId
+    }
+
+    fun handleTaskbarClick(item: DockItemModel) {
+        val matchingWindows = _openWindows.value.filter { win ->
+            if (item.appType != null) win.appType == item.appType
+            else if (item.packageName != null) win.packageName == item.packageName
+            else false
+        }
+
+        if (matchingWindows.isEmpty()) {
+            if (item.appType != null) {
+                openWindow(item.appType, item.label)
+            } else if (item.packageName != null) {
+                openWindow(
+                    appType = WindowAppType.NATIVE_APP,
+                    title = item.label,
+                    packageName = item.packageName
+                )
+            }
+        } else if (matchingWindows.size == 1) {
+            val win = matchingWindows.first()
+            if (!win.isMinimized && win.id == _activeFocusedWindowId.value) {
+                minimizeWindow(win.id)
+            } else {
+                focusWindow(win.id)
+            }
+        } else {
+            val activeWin = matchingWindows.find { it.id == _activeFocusedWindowId.value && !it.isMinimized }
+            if (activeWin != null) {
+                val currentIndex = matchingWindows.indexOf(activeWin)
+                val nextIndex = (currentIndex + 1) % matchingWindows.size
+                val nextWin = matchingWindows[nextIndex]
+                if (nextWin.id == activeWin.id) {
+                    minimizeWindow(activeWin.id)
+                } else {
+                    focusWindow(nextWin.id)
+                }
+            } else {
+                val targetWin = matchingWindows.maxByOrNull { it.zIndex } ?: matchingWindows.first()
+                focusWindow(targetWin.id)
+            }
+        }
+    }
+
+    fun handleWindowTaskbarClick(win: WindowState) {
+        if (!win.isMinimized && win.id == _activeFocusedWindowId.value) {
+            minimizeWindow(win.id)
+        } else {
+            focusWindow(win.id)
+        }
+    }
+
+    fun toggleShowDesktop() {
+        val nonMinimized = _openWindows.value.filter { !it.isMinimized }
+        if (nonMinimized.isNotEmpty()) {
+            _openWindows.value = _openWindows.value.map { it.copy(isMinimized = true, isFocused = false) }
+            _activeFocusedWindowId.value = null
+        } else {
+            val maxZWin = _openWindows.value.maxByOrNull { it.zIndex }
+            _openWindows.value = _openWindows.value.map { win ->
+                if (win.id == maxZWin?.id) win.copy(isMinimized = false, isFocused = true)
+                else win.copy(isMinimized = false, isFocused = false)
+            }
+            _activeFocusedWindowId.value = maxZWin?.id
+        }
     }
 
     fun closeWindow(windowId: String) {

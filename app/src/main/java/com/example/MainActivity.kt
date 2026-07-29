@@ -285,29 +285,13 @@ fun LauncherMainScreen(
                 isQuickSettingsOpen = false
             },
             onTaskbarItemClick = { item ->
-                if (item.appType != null) {
-                    viewModel.openWindow(item.appType, item.label)
-                } else if (item.packageName != null) {
-                    viewModel.openWindow(
-                        appType = WindowAppType.NATIVE_APP,
-                        title = item.label,
-                        packageName = item.packageName
-                    )
-                }
+                viewModel.handleTaskbarClick(item)
             },
             onWindowClick = { win ->
-                if (win.isMinimized) {
-                    viewModel.focusWindow(win.id)
-                } else if (win.id == activeWindowId) {
-                    viewModel.minimizeWindow(win.id)
-                } else {
-                    viewModel.focusWindow(win.id)
-                }
+                viewModel.handleWindowTaskbarClick(win)
             },
             onShowDesktop = {
-                openWindows.forEach { win ->
-                    if (!win.isMinimized) viewModel.minimizeWindow(win.id)
-                }
+                viewModel.toggleShowDesktop()
             },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
