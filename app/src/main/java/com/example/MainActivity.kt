@@ -23,7 +23,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,23 +34,20 @@ import androidx.compose.ui.unit.dp
 import com.example.data.db.LauncherSettingsEntity
 import com.example.model.WindowAppType
 import com.example.ui.apps.AboutMacDialog
-import com.example.ui.apps.CalculatorApp
 import com.example.ui.apps.FinderApp
 import com.example.ui.apps.NativeAppView
 import com.example.ui.apps.NotesApp
 import com.example.ui.apps.SafariApp
 import com.example.ui.apps.SettingsApp
 import com.example.ui.apps.TerminalApp
-import com.example.ui.components.AppleMenuPopup
-import com.example.ui.components.ControlCenterPopup
 import com.example.ui.components.DesktopArea
 import com.example.ui.components.FreeformWindowFrame
-import com.example.ui.components.LaunchpadOverlay
-import com.example.ui.components.MacOSDock
-import com.example.ui.components.TopMenuBar
+import com.example.ui.components.WindowsCalendarFlyout
+import com.example.ui.components.WindowsQuickSettings
+import com.example.ui.components.WindowsStartMenu
+import com.example.ui.components.WindowsTaskbar
 import com.example.ui.theme.MacOSLauncherTheme
 import com.example.viewmodel.LauncherViewModel
-import com.example.windowing.FreeformWindowLauncher
 
 class MainActivity : ComponentActivity() {
 
@@ -90,19 +89,9 @@ fun LauncherMainScreen(
     val desktopIcons by viewModel.desktopIcons.collectAsState()
     val notes by viewModel.notes.collectAsState()
 
-    val isLaunchpadOpen by viewModel.isLaunchpadOpen.collectAsState()
-    val isControlCenterOpen by viewModel.isControlCenterOpen.collectAsState()
-    val isAppleMenuOpen by viewModel.isAppleMenuOpen.collectAsState()
-
-    val activeWindow = openWindows.find { it.id == activeWindowId }
-    val activeAppName = activeWindow?.title ?: "Finder"
-
-    val activeAppTypes = remember(openWindows) {
-        openWindows.map { it.appType }.toSet()
-    }
-    val activePackageNames = remember(openWindows) {
-        openWindows.mapNotNull { it.packageName }.toSet()
-    }
+    var isStartMenuOpen by remember { mutableStateOf(false) }
+    var isQuickSettingsOpen by remember { mutableStateOf(false) }
+    var isCalendarOpen by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -111,34 +100,44 @@ fun LauncherMainScreen(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) {
-                viewModel.setAppleMenuOpen(false)
-                viewModel.setControlCenterOpen(false)
+                isStartMenuOpen = false
+                isQuickSettingsOpen = false
+                isCalendarOpen = false
             }
     ) {
-        // 1. Desktop Backdrop Area (Wallpaper & Icons)
+        // 1. Desktop Area (Wallpaper & Shortcuts)
         DesktopArea(
             wallpaperId = settings.wallpaperId,
             desktopIcons = desktopIcons,
             onDesktopIconClick = { icon ->
                 if (icon.appType != null) {
-                    viewModel.openWindow(icon.appType, icon.label)
+                    val title = when (icon.appType) {
+                        WindowAppType.FINDER -> "File Explorer"
+                        WindowAppType.SAFARI -> "Microsoft Edge"
+                        WindowAppType.NOTES -> "Notepad"
+                        WindowAppType.TERMINAL -> "Terminal"
+                        WindowAppType.CALCULATOR -> "Calculator"
+                        WindowAppType.SETTINGS -> "Settings"
+                        else -> icon.label
+                    }
+                    viewModel.openWindow(icon.appType, title)
                 }
             },
             onNewNoteClick = {
-                viewModel.openWindow(WindowAppType.NOTES, "Notes")
+                viewModel.openWindow(WindowAppType.NOTES, "Notepad")
             },
             onOpenTerminalClick = {
                 viewModel.openWindow(WindowAppType.TERMINAL, "Terminal")
             },
             onLaunchpadClick = {
-                viewModel.setLaunchpadOpen(true)
+                isStartMenuOpen = true
             },
             onChangeWallpaperClick = {
-                viewModel.openWindow(WindowAppType.SETTINGS, "System Settings")
+                viewModel.openWindow(WindowAppType.SETTINGS, "Settings")
             }
         )
 
-        // 2. Interactive Freeform Windowing Layer
+        // 2. Interactive Freeform Window Layer
         val sortedWindows = remember(openWindows) {
             openWindows.sortedBy { it.zIndex }
         }
@@ -158,11 +157,8 @@ fun LauncherMainScreen(
                     WindowAppType.FINDER -> FinderApp(
                         isDarkMode = settings.isDarkMode,
                         onOpenFile = { file ->
-                            if (file.name == "Safari.app") viewModel.openWindow(WindowAppType.SAFARI, "Safari")
-                            if (file.name == "Terminal.app") viewModel.openWindow(WindowAppType.TERMINAL, "Terminal")
-                            if (file.name == "Notes.app") viewModel.openWindow(WindowAppType.NOTES, "Notes")
-                            if (file.name == "Calculator.app") viewModel.openWindow(WindowAppType.CALCULATOR, "Calculator")
-                            if (file.name == "System Settings.app") viewModel.openWindow(WindowAppType.SETTINGS, "System Settings")
+                            if (file.name == "Edge.exe") viewModel.openWindow(WindowAppType.SAFARI, "Microsoft Edge")
+                            if (file.name == "Notepad.exe") viewModel.openWindow(WindowAppType.NOTES, "Notepad")
                         }
                     )
                     WindowAppType.SAFARI -> SafariApp(isDarkMode = settings.isDarkMode)
@@ -173,7 +169,6 @@ fun LauncherMainScreen(
                         onSaveNote = { viewModel.saveNote(it) },
                         onDeleteNote = { viewModel.deleteNote(it) }
                     )
-                    WindowAppType.CALCULATOR -> CalculatorApp()
                     WindowAppType.SETTINGS -> SettingsApp(
                         wallpaperId = settings.wallpaperId,
                         isDarkMode = settings.isDarkMode,
@@ -184,9 +179,9 @@ fun LauncherMainScreen(
                         onDockSizeChange = { viewModel.updateDockSize(it) },
                         onDockMagnificationToggle = { viewModel.toggleDockMagnification(it) }
                     )
-                    WindowAppType.MESSAGES, WindowAppType.PHOTOS, WindowAppType.MUSIC -> AboutMacDialog(isDarkMode = settings.isDarkMode)
+                    WindowAppType.CALCULATOR, WindowAppType.MESSAGES, WindowAppType.PHOTOS, WindowAppType.MUSIC -> AboutMacDialog(isDarkMode = settings.isDarkMode)
                     WindowAppType.LAUNCHPAD -> {
-                        viewModel.setLaunchpadOpen(true)
+                        isStartMenuOpen = true
                         viewModel.closeWindow(winState.id)
                     }
                     WindowAppType.NATIVE_APP -> {
@@ -201,100 +196,121 @@ fun LauncherMainScreen(
             }
         }
 
-        // 3. Top Menu Bar (Fixed at top)
-        TopMenuBar(
-            activeAppName = activeAppName,
-            isDarkMode = settings.isDarkMode,
-            onAppleClick = { viewModel.toggleAppleMenu() },
-            onControlCenterToggle = { viewModel.toggleControlCenter() },
-            onSpotlightClick = { viewModel.toggleLaunchpad() },
-            onMenuItemClick = { item ->
-                when (item) {
-                    "New Window" -> viewModel.openWindow(WindowAppType.FINDER, "Finder")
-                    "New Note" -> viewModel.openWindow(WindowAppType.NOTES, "Notes")
-                    "Help" -> Toast.makeText(context, "macOS Launcher v1.1.0", Toast.LENGTH_SHORT).show()
-                }
-            },
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
-
-        // 4. Apple Logo Menu Popup
-        Box(modifier = Modifier.align(Alignment.TopStart).offset(x = 8.dp, y = 32.dp)) {
-            AppleMenuPopup(
-                isOpen = isAppleMenuOpen,
-                isDarkMode = settings.isDarkMode,
-                onDismiss = { viewModel.setAppleMenuOpen(false) },
-                onAboutMacClick = { viewModel.openWindow(WindowAppType.MESSAGES, "About This Mac") },
-                onSettingsClick = { viewModel.openWindow(WindowAppType.SETTINGS, "System Settings") },
-                onLaunchpadClick = { viewModel.setLaunchpadOpen(true) },
-                onLockClick = { Toast.makeText(context, "Screen Locked", Toast.LENGTH_SHORT).show() },
-                onRestartClick = { Toast.makeText(context, "Restarting Launcher...", Toast.LENGTH_SHORT).show() }
-            )
-        }
-
-        // 5. Control Center Popup
-        Box(modifier = Modifier.align(Alignment.TopEnd).offset(x = (-12).dp, y = 32.dp)) {
-            ControlCenterPopup(
-                isOpen = isControlCenterOpen,
-                isDarkMode = settings.isDarkMode,
-                onDarkModeToggle = { viewModel.toggleDarkMode(it) },
-                onDismiss = { viewModel.setControlCenterOpen(false) }
-            )
-        }
-
-        // 6. Floating macOS Dock (Fixed at Bottom)
-        MacOSDock(
-            dockItems = dockItems,
-            activeAppTypes = activeAppTypes,
-            activePackageNames = activePackageNames,
-            isDarkMode = settings.isDarkMode,
-            onDockItemClick = { dockItem ->
-                if (dockItem.appType != null) {
-                    if (dockItem.appType == WindowAppType.LAUNCHPAD) {
-                        viewModel.setLaunchpadOpen(true)
-                    } else {
-                        viewModel.openWindow(dockItem.appType, dockItem.label)
+        // 3. Windows 11 Start Menu Flyout
+        if (isStartMenuOpen) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 56.dp)
+            ) {
+                WindowsStartMenu(
+                    isDarkMode = settings.isDarkMode,
+                    installedApps = installedApps,
+                    onDismiss = { isStartMenuOpen = false },
+                    onAppClick = { app ->
+                        viewModel.openWindow(
+                            appType = WindowAppType.NATIVE_APP,
+                            title = app.label,
+                            packageName = app.packageName,
+                            appIcon = app.icon
+                        )
+                    },
+                    onBuiltInAppClick = { appType ->
+                        val title = when (appType) {
+                            WindowAppType.FINDER -> "File Explorer"
+                            WindowAppType.SAFARI -> "Microsoft Edge"
+                            WindowAppType.TERMINAL -> "Terminal"
+                            WindowAppType.NOTES -> "Notepad"
+                            WindowAppType.CALCULATOR -> "Calculator"
+                            WindowAppType.SETTINGS -> "Settings"
+                            else -> "App"
+                        }
+                        viewModel.openWindow(appType, title)
                     }
-                } else if (dockItem.packageName != null) {
+                )
+            }
+        }
+
+        // 4. Windows 11 Quick Settings Flyout
+        if (isQuickSettingsOpen) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 56.dp, end = 12.dp)
+            ) {
+                WindowsQuickSettings(
+                    isDarkMode = settings.isDarkMode,
+                    onToggleDarkMode = { viewModel.toggleDarkMode(it) },
+                    onDismiss = { isQuickSettingsOpen = false }
+                )
+            }
+        }
+
+        // 5. Windows 11 Calendar & Notification Flyout
+        if (isCalendarOpen) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 56.dp, end = 12.dp)
+            ) {
+                WindowsCalendarFlyout(
+                    isDarkMode = settings.isDarkMode,
+                    onDismiss = { isCalendarOpen = false }
+                )
+            }
+        }
+
+        // 6. Windows 11 Bottom Taskbar
+        WindowsTaskbar(
+            isDarkMode = settings.isDarkMode,
+            openWindows = openWindows,
+            activeWindowId = activeWindowId,
+            dockItems = dockItems,
+            isStartMenuOpen = isStartMenuOpen,
+            isQuickSettingsOpen = isQuickSettingsOpen,
+            isCalendarOpen = isCalendarOpen,
+            onToggleStartMenu = {
+                isStartMenuOpen = !isStartMenuOpen
+                isQuickSettingsOpen = false
+                isCalendarOpen = false
+            },
+            onToggleQuickSettings = {
+                isQuickSettingsOpen = !isQuickSettingsOpen
+                isStartMenuOpen = false
+                isCalendarOpen = false
+            },
+            onToggleCalendar = {
+                isCalendarOpen = !isCalendarOpen
+                isStartMenuOpen = false
+                isQuickSettingsOpen = false
+            },
+            onTaskbarItemClick = { item ->
+                if (item.appType != null) {
+                    viewModel.openWindow(item.appType, item.label)
+                } else if (item.packageName != null) {
                     viewModel.openWindow(
                         appType = WindowAppType.NATIVE_APP,
-                        title = dockItem.label,
-                        packageName = dockItem.packageName
+                        title = item.label,
+                        packageName = item.packageName
                     )
                 }
             },
-            onDockItemLongClick = { },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
-
-        // 7. Launchpad Fullscreen Overlay
-        LaunchpadOverlay(
-            isOpen = isLaunchpadOpen,
-            installedApps = installedApps,
-            onDismiss = { viewModel.setLaunchpadOpen(false) },
-            onAppClick = { app ->
-                viewModel.openWindow(
-                    appType = WindowAppType.NATIVE_APP,
-                    title = app.label,
-                    packageName = app.packageName,
-                    appIcon = app.icon
-                )
-            },
-            onBuiltInAppClick = { appType ->
-                val title = when (appType) {
-                    WindowAppType.FINDER -> "Finder"
-                    WindowAppType.SAFARI -> "Safari"
-                    WindowAppType.TERMINAL -> "Terminal"
-                    WindowAppType.NOTES -> "Notes"
-                    WindowAppType.CALCULATOR -> "Calculator"
-                    WindowAppType.SETTINGS -> "System Settings"
-                    WindowAppType.MESSAGES -> "Messages"
-                    WindowAppType.PHOTOS -> "Photos"
-                    WindowAppType.MUSIC -> "Music"
-                    else -> "App"
+            onWindowClick = { win ->
+                if (win.isMinimized) {
+                    viewModel.focusWindow(win.id)
+                } else if (win.id == activeWindowId) {
+                    viewModel.minimizeWindow(win.id)
+                } else {
+                    viewModel.focusWindow(win.id)
                 }
-                viewModel.openWindow(appType, title)
-            }
+            },
+            onShowDesktop = {
+                openWindows.forEach { win ->
+                    if (!win.isMinimized) viewModel.minimizeWindow(win.id)
+                }
+            },
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 }
+

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Wallpaper
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.R
 import com.example.model.DesktopIconModel
 import com.example.model.WindowAppType
@@ -56,10 +58,10 @@ fun DesktopArea(
 ) {
     var wallpaperContextMenuOpen by remember { mutableStateOf(false) }
 
-    val wallpaperRes = when (wallpaperId) {
-        "dark_ventura" -> R.drawable.img_wallpaper_dark_ventura_1785360037431
-        else -> R.drawable.img_wallpaper_macos_default_1785360027008
-    }
+    val isCustomWallpaper = wallpaperId.startsWith("http://") ||
+            wallpaperId.startsWith("https://") ||
+            wallpaperId.startsWith("content://") ||
+            wallpaperId.startsWith("file://")
 
     Box(
         modifier = modifier
@@ -72,18 +74,44 @@ fun DesktopArea(
             .testTag("desktop_area")
     ) {
         // High-res Wallpaper Background Image
-        Image(
-            painter = painterResource(id = wallpaperRes),
-            contentDescription = "Desktop Wallpaper",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+        if (isCustomWallpaper) {
+            AsyncImage(
+                model = wallpaperId,
+                contentDescription = "Desktop Wallpaper",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            val wallpaperRes = when (wallpaperId) {
+                "dark_ventura" -> R.drawable.img_wallpaper_dark_ventura_1785360037431
+                "macos_default" -> R.drawable.img_wallpaper_macos_default_1785360027008
+                else -> R.drawable.img_wallpaper_win11_bloom_1785365304683
+            }
+            Image(
+                painter = painterResource(id = wallpaperRes),
+                contentDescription = "Desktop Wallpaper",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
 
         // Desktop Context Menu on empty wallpaper tap/long press
         DropdownMenu(
             expanded = wallpaperContextMenuOpen,
             onDismissRequest = { wallpaperContextMenuOpen = false }
         ) {
+            DropdownMenuItem(
+                text = { Text("View") },
+                onClick = { wallpaperContextMenuOpen = false }
+            )
+            DropdownMenuItem(
+                text = { Text("Sort by") },
+                onClick = { wallpaperContextMenuOpen = false }
+            )
+            DropdownMenuItem(
+                text = { Text("Refresh") },
+                onClick = { wallpaperContextMenuOpen = false }
+            )
             DropdownMenuItem(
                 text = { Text("New Note") },
                 onClick = {
@@ -99,14 +127,7 @@ fun DesktopArea(
                 }
             )
             DropdownMenuItem(
-                text = { Text("Launchpad") },
-                onClick = {
-                    wallpaperContextMenuOpen = false
-                    onLaunchpadClick()
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("Change Desktop Background...") },
+                text = { Text("Personalize Background") },
                 onClick = {
                     wallpaperContextMenuOpen = false
                     onChangeWallpaperClick()
@@ -114,11 +135,11 @@ fun DesktopArea(
             )
         }
 
-        // Desktop Shortcuts List on Right Side (macOS default layout)
+        // Desktop Shortcuts Grid on Top Left Side (Windows 11 default layout)
         Column(
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 16.dp, end = 20.dp),
+                .align(Alignment.TopStart)
+                .padding(top = 16.dp, start = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -126,16 +147,17 @@ fun DesktopArea(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
+                        .width(76.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .clickable { onDesktopIconClick(iconModel) }
-                        .padding(8.dp)
+                        .padding(6.dp)
                         .testTag("desktop_icon_${iconModel.id}")
                 ) {
                     val (vector, bgGradient) = getBuiltInIconData(iconModel.appType)
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(10.dp))
                             .background(bgGradient),
                         contentAlignment = Alignment.Center
                     ) {
@@ -143,11 +165,11 @@ fun DesktopArea(
                             imageVector = vector,
                             contentDescription = iconModel.label,
                             tint = Color.White,
-                            modifier = Modifier.size(30.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
                         text = iconModel.label,
@@ -158,11 +180,12 @@ fun DesktopArea(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
-                            .background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
                     )
                 }
             }
         }
+
     }
 }

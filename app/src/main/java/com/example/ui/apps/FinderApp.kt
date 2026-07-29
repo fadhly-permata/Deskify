@@ -78,8 +78,8 @@ fun FinderApp(
 
     val sidebarItems = remember {
         listOf(
-            "Recents" to Icons.Default.Schedule,
-            "Applications" to Icons.Default.Home,
+            "Quick access" to Icons.Default.Schedule,
+            "This PC (C:)" to Icons.Default.Home,
             "Documents" to Icons.Default.Description,
             "Downloads" to Icons.Default.Download,
             "Pictures" to Icons.Default.Image,
@@ -89,21 +89,21 @@ fun FinderApp(
 
     val mockFiles = remember(selectedSection) {
         when (selectedSection) {
-            "Applications" -> listOf(
-                FileItem("Safari.app", false, "124 MB", "Today, 2:15 PM", Icons.Default.Folder),
-                FileItem("Terminal.app", false, "45 MB", "Yesterday, 10:30 AM", Icons.Default.Folder),
-                FileItem("Notes.app", false, "32 MB", "Jul 28, 2026", Icons.Default.Folder),
-                FileItem("Calculator.app", false, "12 MB", "Jul 25, 2026", Icons.Default.Folder),
-                FileItem("System Settings.app", false, "88 MB", "Jul 20, 2026", Icons.Default.Folder)
+            "This PC (C:)" -> listOf(
+                FileItem("Program Files", true, "--", "Today, 2:15 PM", Icons.Default.Folder),
+                FileItem("Windows", true, "--", "Yesterday, 10:30 AM", Icons.Default.Folder),
+                FileItem("Users", true, "--", "Jul 28, 2026", Icons.Default.Folder),
+                FileItem("Edge.exe", false, "124 MB", "Jul 25, 2026", Icons.Default.Folder),
+                FileItem("Notepad.exe", false, "12 MB", "Jul 20, 2026", Icons.Default.Folder)
             )
             "Documents" -> listOf(
-                FileItem("Project_PRD_macOS.pdf", false, "2.4 MB", "Today, 1:45 PM", Icons.Default.Description),
+                FileItem("Project_PRD_Windows11.pdf", false, "2.4 MB", "Today, 1:45 PM", Icons.Default.Description),
                 FileItem("Architecture_Diagram.png", false, "4.1 MB", "Jul 27, 2026", Icons.Default.Image),
                 FileItem("Meeting_Notes.txt", false, "15 KB", "Jul 26, 2026", Icons.Default.Description)
             )
             "Downloads" -> listOf(
-                FileItem("macOS_Sequoia_Installer.dmg", false, "12.8 GB", "Jul 24, 2026", Icons.Default.Download),
-                FileItem("wallpaper_4k.jpg", false, "8.2 MB", "Jul 22, 2026", Icons.Default.Image)
+                FileItem("Windows_11_24H2_ISO.iso", false, "5.8 GB", "Jul 24, 2026", Icons.Default.Download),
+                FileItem("wallpaper_fluent.jpg", false, "8.2 MB", "Jul 22, 2026", Icons.Default.Image)
             )
             else -> listOf(
                 FileItem("Sample_Folder", true, "--", "Jul 28, 2026", Icons.Default.Folder),

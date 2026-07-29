@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import com.example.ui.theme.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -68,16 +69,16 @@ fun FreeformWindowFrame(
 ) {
     if (windowState.isMinimized) return
 
-    val titleBarBg = if (isDarkMode) MacOSDarkTitleBar else MacOSLightTitleBar
-    val windowBg = if (isDarkMode) MacOSDarkWindowBg else MacOSLightWindowBg
-    val textColor = if (isDarkMode) Color.White else Color(0xFF1D1D1F)
+    val titleBarBg = if (isDarkMode) Win11DarkTitleBar else Win11LightTitleBar
+    val windowBg = if (isDarkMode) Win11DarkWindowBg else Win11LightWindowBg
+    val textColor = if (isDarkMode) Color.White else Color(0xFF1C1C1C)
     val borderColor = if (windowState.isFocused) {
-        if (isDarkMode) Color(0x66FFFFFF) else Color(0x44000000)
+        if (isDarkMode) Color(0x66FFFFFF) else Color(0x33000000)
     } else {
-        if (isDarkMode) Color(0x22FFFFFF) else Color(0x22000000)
+        if (isDarkMode) Color(0x22FFFFFF) else Color(0x15000000)
     }
 
-    val elevation = if (windowState.isFocused) 24.dp else 8.dp
+    val elevation = if (windowState.isFocused) 16.dp else 6.dp
     val density = LocalDensity.current
 
     val modifier = if (windowState.isMaximized) {
@@ -93,9 +94,9 @@ fun FreeformWindowFrame(
 
     Surface(
         modifier = modifier
-            .shadow(elevation, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .shadow(elevation, RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(10.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(10.dp))
             .pointerInput(Unit) {
                 detectDragGestures { _, _ -> onFocus() }
             }
@@ -108,11 +109,11 @@ fun FreeformWindowFrame(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // macOS Title Bar (Draggable)
+                // Windows 11 Title Bar (Draggable)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(34.dp)
+                        .height(36.dp)
                         .background(titleBarBg)
                         .pointerInput(density) {
                             detectDragGestures { change, dragAmount ->
@@ -121,54 +122,14 @@ fun FreeformWindowFrame(
                                 val dyDp = with(density) { dragAmount.y.toDp().value }
                                 onMove(dxDp, dyDp)
                             }
-                        }
-                        .padding(horizontal = 10.dp),
+                        },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Traffic Light Buttons (🔴 🟡 🟢)
+                    // Left: App Icon & Title
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // 🔴 Close
-                        Box(
-                            modifier = Modifier
-                                .size(13.dp)
-                                .clip(CircleShape)
-                                .background(TrafficRed)
-                                .clickable { onClose() }
-                                .testTag("traffic_light_close_${windowState.id}"),
-                            contentAlignment = Alignment.Center
-                        ) {}
-
-                        // 🟡 Minimize
-                        Box(
-                            modifier = Modifier
-                                .size(13.dp)
-                                .clip(CircleShape)
-                                .background(TrafficYellow)
-                                .clickable { onMinimize() }
-                                .testTag("traffic_light_minimize_${windowState.id}"),
-                            contentAlignment = Alignment.Center
-                        ) {}
-
-                        // 🟢 Maximize / Zoom
-                        Box(
-                            modifier = Modifier
-                                .size(13.dp)
-                                .clip(CircleShape)
-                                .background(TrafficGreen)
-                                .clickable { onMaximize() }
-                                .testTag("traffic_light_maximize_${windowState.id}"),
-                            contentAlignment = Alignment.Center
-                        ) {}
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // App Title & Optional Icon
-                    Row(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (windowState.appIcon != null) {
@@ -180,17 +141,75 @@ fun FreeformWindowFrame(
                                     .size(16.dp)
                                     .clip(RoundedCornerShape(3.dp))
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                         }
 
                         Text(
                             text = windowState.title,
-                            color = textColor.copy(alpha = if (windowState.isFocused) 1f else 0.6f),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            color = textColor.copy(alpha = if (windowState.isFocused) 1f else 0.7f),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                    }
+
+                    // Right: Windows 11 Window Controls (Minimize, Maximize, Close)
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Minimize
+                        Box(
+                            modifier = Modifier
+                                .width(44.dp)
+                                .height(36.dp)
+                                .clickable { onMinimize() }
+                                .testTag("window_control_minimize_${windowState.id}"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Remove,
+                                contentDescription = "Minimize",
+                                tint = textColor,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+
+                        // Maximize / Restore
+                        Box(
+                            modifier = Modifier
+                                .width(44.dp)
+                                .height(36.dp)
+                                .clickable { onMaximize() }
+                                .testTag("window_control_maximize_${windowState.id}"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CropSquare,
+                                contentDescription = "Maximize",
+                                tint = textColor,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+
+                        // Close (Windows Red Hover Style)
+                        Box(
+                            modifier = Modifier
+                                .width(46.dp)
+                                .height(36.dp)
+                                .background(Color.Transparent)
+                                .clickable { onClose() }
+                                .testTag("window_control_close_${windowState.id}"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = textColor,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
                     }
                 }
 

@@ -70,33 +70,23 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     private fun initDefaultDockAndDesktop() {
         val defaultDock = listOf(
-            DockItemModel("dock_finder", "Finder", appType = WindowAppType.FINDER),
-            DockItemModel("dock_launchpad", "Launchpad", appType = WindowAppType.LAUNCHPAD),
-            DockItemModel("dock_safari", "Safari", appType = WindowAppType.SAFARI),
-            DockItemModel("dock_messages", "Messages", appType = WindowAppType.MESSAGES),
-            DockItemModel("dock_notes", "Notes", appType = WindowAppType.NOTES),
+            DockItemModel("dock_finder", "File Explorer", appType = WindowAppType.FINDER),
+            DockItemModel("dock_safari", "Microsoft Edge", appType = WindowAppType.SAFARI),
+            DockItemModel("dock_notes", "Notepad", appType = WindowAppType.NOTES),
             DockItemModel("dock_terminal", "Terminal", appType = WindowAppType.TERMINAL),
-            DockItemModel("dock_calc", "Calculator", appType = WindowAppType.CALCULATOR),
             DockItemModel("dock_settings", "Settings", appType = WindowAppType.SETTINGS)
         )
         _dockItems.value = defaultDock
 
-        val defaultDesktop = listOf(
-            DesktopIconModel("desk_finder", "Finder", appType = WindowAppType.FINDER),
-            DesktopIconModel("desk_notes", "Notes", appType = WindowAppType.NOTES),
-            DesktopIconModel("desk_terminal", "Terminal", appType = WindowAppType.TERMINAL)
-        )
-        _desktopIcons.value = defaultDesktop
+        _desktopIcons.value = emptyList()
     }
 
     private fun seedSampleNote() {
         viewModelScope.launch {
-            val existing = db.noteDao().getAllNotes()
-            // Seed a welcome note if db empty
             db.noteDao().insertNote(
                 NoteEntity(
-                    title = "Welcome to macOS Launcher!",
-                    content = "This is a full macOS desktop environment launcher for Android.\n\nFeatures:\n- Freeform Windowing with Traffic Light buttons (🔴🟡🟢)\n- Floating macOS Dock & Launchpad\n- Control Center & Realtime Top Menu Bar\n- Built-in Finder, Safari, Terminal, Notes, Calculator, Settings\n- Native Android app execution!",
+                    title = "Welcome to Windows 11 Launcher!",
+                    content = "This is a full Windows 11 desktop experience for Android.\n\nKey Features:\n- Windows 11 Taskbar, Start Menu, Quick Settings & Calendar\n- Freeform multi-windowing with Windows titlebar controls (— 🗖 ✕)\n- Clean, full-canvas window content without clutter\n- Built-in File Explorer, Edge, Notepad, Calculator, Terminal, Settings\n- Native Android app support!",
                     isPinned = true
                 )
             )

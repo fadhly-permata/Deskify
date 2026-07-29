@@ -1,6 +1,6 @@
 {
-  "name": "macOS Launcher",
-  "description": "macOS Style Android Launcher with Freeform Windowing, Dock, Launchpad, Control Center, and Desktop apps",
+  "name": "Windows 11 Launcher",
+  "description": "Windows 11 Style Android Launcher with Start Menu, Taskbar, Quick Settings, Calendar Flyout, and Freeform Windows",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,5 +1,8 @@
 package com.example.ui.apps
 
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,15 +25,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.BatteryFull
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Dock
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -45,13 +56,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.R
 import com.example.ui.theme.MacOSBlue
+import java.io.File
+import java.io.FileOutputStream
+import androidx.compose.ui.platform.testTag
 
 @Composable
 fun SettingsApp(
@@ -143,6 +158,49 @@ fun SettingsApp(
 
             when (selectedSection) {
                 "Appearance" -> {
+                    val context = LocalContext.current
+                    var customUrlText by remember { mutableStateOf("") }
+
+                    val cameraLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.TakePicturePreview()
+                    ) { bitmap ->
+                        bitmap?.let {
+                            try {
+                                val file = File(context.filesDir, "custom_wallpaper_cam_${System.currentTimeMillis()}.jpg")
+                                FileOutputStream(file).use { out ->
+                                    it.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                                }
+                                onWallpaperChange("file://${file.absolutePath}")
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+
+                    val filePickerLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.GetContent()
+                    ) { uri ->
+                        uri?.let {
+                            try {
+                                val inputStream = context.contentResolver.openInputStream(it)
+                                val file = File(context.filesDir, "custom_wallpaper_file_${System.currentTimeMillis()}.jpg")
+                                inputStream?.use { input ->
+                                    file.outputStream().use { output ->
+                                        input.copyTo(output)
+                                    }
+                                }
+                                onWallpaperChange("file://${file.absolutePath}")
+                            } catch (e: Exception) {
+                                onWallpaperChange(it.toString())
+                            }
+                        }
+                    }
+
+                    val isCustom = wallpaperId.startsWith("http://") ||
+                            wallpaperId.startsWith("https://") ||
+                            wallpaperId.startsWith("content://") ||
+                            wallpaperId.startsWith("file://")
+
                     // Dark Mode Toggle
                     SettingCardRow(textColor = textColor, isDarkMode = isDarkMode) {
                         Text("Dark Appearance", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Medium)
@@ -158,12 +216,116 @@ fun SettingsApp(
                     Text("Desktop Wallpaper", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        WallpaperCard("default_sequoia", R.drawable.img_wallpaper_macos_default_1785360027008, "Sequoia Default", wallpaperId == "default_sequoia") {
-                            onWallpaperChange("default_sequoia")
+                    Text("Preset Wallpaper", color = textColor.copy(alpha = 0.7f), fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        WallpaperCard("win11_bloom", R.drawable.img_wallpaper_win11_bloom_1785365304683, "Windows 11 Bloom", !isCustom && (wallpaperId == "win11_bloom" || wallpaperId == "default_sequoia")) {
+                            onWallpaperChange("win11_bloom")
                         }
-                        WallpaperCard("dark_ventura", R.drawable.img_wallpaper_dark_ventura_1785360037431, "Dark Ventura", wallpaperId == "dark_ventura") {
+                        WallpaperCard("dark_ventura", R.drawable.img_wallpaper_dark_ventura_1785360037431, "Dark Ventura", !isCustom && wallpaperId == "dark_ventura") {
                             onWallpaperChange("dark_ventura")
+                        }
+                        WallpaperCard("macos_default", R.drawable.img_wallpaper_macos_default_1785360027008, "Classic Default", !isCustom && wallpaperId == "macos_default") {
+                            onWallpaperChange("macos_default")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = if (isDarkMode) Color(0x33FFFFFF) else Color(0x1A000000))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text("Ganti Wallpaper Kustom", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Buttons for Camera and File Picker
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedButton(
+                            onClick = { cameraLauncher.launch(null) },
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = "Camera", modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Ambil Foto (Kamera)", fontSize = 12.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = { filePickerLauncher.launch("image/*") },
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.FolderOpen, contentDescription = "File Picker", modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Pilih File Gambar", fontSize = 12.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // URL Input field
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = customUrlText,
+                            onValueChange = { customUrlText = it },
+                            placeholder = { Text("Masukkan URL gambar (https://...)", fontSize = 12.sp) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MacOSBlue,
+                                unfocusedBorderColor = if (isDarkMode) Color(0x44FFFFFF) else Color(0x33000000)
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Button(
+                            onClick = {
+                                if (customUrlText.isNotBlank()) {
+                                    onWallpaperChange(customUrlText.trim())
+                                }
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MacOSBlue)
+                        ) {
+                            Icon(Icons.Default.AddLink, contentDescription = "Apply URL", modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Gunakan URL", fontSize = 12.sp)
+                        }
+                    }
+
+                    if (isCustom) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Wallpaper Kustom Saat Ini (Aktif)", color = textColor, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .border(2.dp, MacOSBlue, RoundedCornerShape(10.dp))
+                        ) {
+                            AsyncImage(
+                                model = wallpaperId,
+                                contentDescription = "Custom Active Wallpaper",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { onWallpaperChange("win11_bloom") },
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Reset ke Wallpaper Bawaan", fontSize = 12.sp, color = Color.Red)
                         }
                     }
                 }

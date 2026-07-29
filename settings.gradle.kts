@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "macOS Launcher"
+rootProject.name = "Windows 11 Launcher"
 
 include(":app")
